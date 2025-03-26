@@ -44,14 +44,43 @@ def parse_variant_csv(file_path):
     key_df_list = []
     
     for _, row in df.iterrows():
-        key = str(row["key"]).strip()  # key を文字列として取得
+        key = str(row["key"]).strip() 
         
-        # 空の DataFrame を作成（カラムのみ定義）
-        df_variant = pd.DataFrame(columns=["name1", "value1", "name2", "value2", "name3", "value3"])
+        # variant の内容を取得
+        variant_cell = row["variant"]
+        
+        # variant を行ごとに分割
+        variant_lines = variant_cell.split("\n")
+        
+        parsed_variants = []
+        
+        for variant in variant_lines:
+            parts = variant.split(" ", 1)
+            if len(parts) == 2:
+                name, values = parts
+                parsed_variants.append((name, values.split()))  # 2番目の部分（オプション）を分割
+        
+        # 値の組み合わせを生成
+        value_combinations = list(itertools.product(*[v for _, v in parsed_variants]))
+        
+        # DataFrame 用のデータ
+        output = []
+        for values in value_combinations:
+            flat_list = list(itertools.chain(*zip([name for name, _ in parsed_variants], values)))
+            row_data = flat_list + ([""] * (6 - len(flat_list)))  # 最大3ペア (name, value)まで埋める
+            output.append(row_data)
 
-        # key と空の DataFrame をタプルとして追加
+        # DataFrame を作成
+        header = []
+        for i in range(1, 4):  # 最大3つの属性を想定
+            header.extend([f"name{i}", f"value{i}"])
+
+        df_variant = pd.DataFrame(output, columns=header)
+        
+        # key と DataFrame をタプルとして追加
         key_df_list.append((key, df_variant))
 
+    # 結果を表示
     for key, df in key_df_list:
         print(f"Key: {key}")
         print(df)
