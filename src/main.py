@@ -22,14 +22,14 @@ def main(page: ft.Page):
         nonlocal file_path_1
         if e.files:
             file_path_1 = e.files[0].path
-            status_text.value = "1つ目のCSVファイルが選択されました。"
+            status_text.value = "商品一覧CSVが選択されました。"
             check_ready_to_download()
 
     def on_file_selected_2(e: ft.FilePickerResultEvent):
         nonlocal file_path_2
         if e.files:
             file_path_2 = e.files[0].path
-            status_text.value = "2つ目のCSVファイルが選択されました。"
+            status_text.value = "バリエーションCSVが選択されました。"
             check_ready_to_download()
 
     def process_files():
@@ -55,7 +55,7 @@ def main(page: ft.Page):
     def on_download(e):
         """CSVを処理して保存ダイアログを開く"""
         process_files()
-        file_saver.save_file(file_name="merged_csv.csv", file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csv"])
+        file_saver.save_file(file_name="merged.csv", file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csv"])
 
     file_picker_1 = ft.FilePicker(on_result=on_file_selected_1)
     file_picker_2 = ft.FilePicker(on_result=on_file_selected_2)
@@ -67,8 +67,8 @@ def main(page: ft.Page):
             [
                 ft.Row(
                     [
-                        ft.ElevatedButton("1つ目のファイルを選択", on_click=lambda _: file_picker_1.pick_files(allowed_extensions=["csv"])),
-                        ft.ElevatedButton("2つ目のファイルを選択", on_click=lambda _: file_picker_2.pick_files(allowed_extensions=["csv"])),
+                        ft.ElevatedButton("商品一覧CSVを選択", on_click=lambda _: file_picker_1.pick_files(allowed_extensions=["csv"])),
+                        ft.ElevatedButton("バリエーションCSVを選択", on_click=lambda _: file_picker_2.pick_files(allowed_extensions=["csv"])),
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
