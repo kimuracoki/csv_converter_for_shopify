@@ -14,36 +14,19 @@ def process_csv(file_path1, file_path2):
 
         new_df = pd.DataFrame()
 
-        # for new_col, old_col in MAPPING.items():
-        #     for key, option in parse_variant_csv(file_path2):
-        #         if old_col in df.columns:
-        #             if key == new_df['Variant SKU']:
-        #                 for index, row in option.iterrows():
-        #                     new_df[new_col] = df[old_col] 
-        #                     # バリエーションによって上書き
-        #                     # new_df['Handle'] = new_df['Handle'] + index
-        #                     # new_df['Variant SKU'] = new_df['Variant SKU'] + index 
-        #                     new_df['Option 1 Name'] = row['name1']
-        #                     new_df['Option 1 Value'] = row['value1']
-        #                     new_df['Option 2 Name'] = row['name2']
-        #                     new_df['Option 2 Value'] = row['value2']
-        #                     new_df['Option 3 Name'] = row['name3']
-        #                     new_df['Option 3 Value'] = row['value3']
-        #             else: 
-        #                 new_df[new_col] = df[old_col]
-        #         else:
-        #             new_df[new_col] = ""  
-
         for new_col, old_col in MAPPING.items():
             if old_col in df.columns: 
                 new_df[new_col] = df[old_col] 
             else:
                 new_df[new_col] = "" 
         
+        parse_variant_results = parse_variant_csv(file_path2)
+        parsed_keys = {key for key, _ in parse_variant_results}  # parse_variant_csv の key 一覧
+
         merged_data = []
-        
+
         # 結合処理
-        for key, df_variant in parse_variant_csv(file_path2):
+        for key, df_variant in parse_variant_results:
             # `Handle` と `key` が一致するデータを取得
             df_match = new_df[new_df["Handle"] == key]
 
@@ -59,7 +42,20 @@ def process_csv(file_path1, file_path2):
                     new_row["value3"] = row["value3"]
                     merged_data.append(new_row)  # リストに追加
 
-        df_merged = pd.concat(merged_data, ignore_index=True)
+        # `Handle` が `parse_variant_csv` にない場合の処理
+        df_no_match = new_df[~new_df["Handle"].isin(parsed_keys)].copy()
+        if not df_no_match.empty:
+            df_no_match["Handle"] = df_no_match["Handle"] + "-00"  # Handle に "-00" を追加
+            df_no_match["name1"] = ""
+            df_no_match["value1"] = ""
+            df_no_match["name2"] = ""
+            df_no_match["value2"] = ""
+            df_no_match["name3"] = ""
+            df_no_match["value3"] = ""
+            merged_data.append(df_no_match)
+
+        # `merged_data` が空でない場合のみ `concat` を実行
+        df_merged = pd.concat(merged_data, ignore_index=True) if merged_data else new_df.copy()
         
         
         csv_buffer = io.StringIO()
