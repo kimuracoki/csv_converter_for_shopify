@@ -25,35 +25,39 @@ def process_csv(file_path1, file_path2):
 
         merged_data = []
 
+        new_df["SKU"] = new_df["SKU"].astype(str).str.strip()
+
         # 結合処理
         for key, df_variant in parse_variant_results:
-            # `Handle` と `key` が一致するデータを取得
-            df_match = new_df[new_df["Handle"] == key]
-            print("マージ中：key = ", key)
+            key = str(key).strip()
+            # `SKU` と `key` が一致するデータを取得
+            df_match = new_df[new_df["SKU"] == key]
 
             if not df_match.empty:
                 for i, (_, row) in enumerate(df_variant.iterrows(), start=1):
                     new_row = df_match.copy()  # 結合元のデータをコピー
-                    new_row["Handle"] = key + f"-{i:02d}"  # Handleを "-01", "-02" のように採番
-                    new_row["Option 1 Name"] = row["name1"]
-                    new_row["Option 1 Value"] = row["value1"]
-                    new_row["Option 2 Name"] = row["name2"]
-                    new_row["Option 2 Value"] = row["value2"]
-                    new_row["Option 3 Name"] = row["name3"]
-                    new_row["Option 3 Value"] = row["value3"]
+                    new_row["SKU"] = str(key) + f"-{i:02d}"
+                    new_row["Option1 name"] = row["name1"]
+                    new_row["Option1 value"] = row["value1"]
+                    new_row["Option2 name"] = row["name2"]
+                    new_row["Option2 value"] = row["value2"]
+                    new_row["Option3 name"] = row["name3"]
+                    new_row["Option3 value"] = row["value3"]
                     merged_data.append(new_row)  # リストに追加
+                    print("マージ中：SKU = ", new_row["SKU"])
 
-        # `Handle` が `parse_variant_csv` にない場合の処理
-        df_no_match = new_df[~new_df["Handle"].isin(parsed_keys)].copy()
+        # `SKU` が `parse_variant_csv` にない場合の処理
+        df_no_match = new_df[~new_df["SKU"].isin(parsed_keys)].copy()
         if not df_no_match.empty:
-            df_no_match["Handle"] = df_no_match["Handle"] + "-00"  # Handle に "-00" を追加
-            df_no_match["Option 1 Name"] = ""
-            df_no_match["Option 1 Value"] = ""
-            df_no_match["Option 2 Name"] = ""
-            df_no_match["Option 2 Value"] = ""
-            df_no_match["Option 3 Name"] = ""
-            df_no_match["Option 3 Value"] = ""
+            df_no_match["SKU"] = df_no_match["SKU"].astype(str) + "-00"
+            df_no_match["Option1 name"] = ""
+            df_no_match["Option1 value"] = ""
+            df_no_match["Option2 name"] = ""
+            df_no_match["Option2 value"] = ""
+            df_no_match["Option3 name"] = ""
+            df_no_match["Option3 value"] = ""
             merged_data.append(df_no_match)
+            print("マージ中：SKU = ", df_no_match["SKU"])
 
         # `merged_data` が空でない場合のみ `concat` を実行
         df_merged = pd.concat(merged_data, ignore_index=True) if merged_data else new_df.copy()
@@ -86,7 +90,7 @@ def parse_variant_csv(file_path):
         parsed_variants = []
         
         for variant in variant_lines:
-            parts = variant.replace(" 選択してください", "").split(" ", 1)
+            parts = variant.replace("選択して下さい", "").split(" ", 1)
             if len(parts) == 2:
                 name, values = parts
                 parsed_variants.append((name, values.split()))  # 2番目の部分（オプション）を分割
