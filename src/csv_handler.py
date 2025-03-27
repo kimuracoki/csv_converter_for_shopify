@@ -29,6 +29,7 @@ def process_csv(file_path1, file_path2):
         for key, df_variant in parse_variant_results:
             # `Handle` と `key` が一致するデータを取得
             df_match = new_df[new_df["Handle"] == key]
+            print("マージ中：key = ", key)
 
             if not df_match.empty:
                 for i, (_, row) in enumerate(df_variant.iterrows(), start=1):
@@ -47,7 +48,7 @@ def process_csv(file_path1, file_path2):
         if not df_no_match.empty:
             df_no_match["Handle"] = df_no_match["Handle"] + "-00"  # Handle に "-00" を追加
             df_no_match["Option 1 Name"] = ""
-            df_no_match["Option  Value"] = ""
+            df_no_match["Option 1 Value"] = ""
             df_no_match["Option 2 Name"] = ""
             df_no_match["Option 2 Value"] = ""
             df_no_match["Option 3 Name"] = ""
@@ -60,6 +61,7 @@ def process_csv(file_path1, file_path2):
         
         csv_buffer = io.StringIO()
         df_merged.to_csv(csv_buffer, index=False, encoding="utf-8", sep=",")
+        print("処理完了")
         return csv_buffer.getvalue()
 
     except Exception as ex:
@@ -67,14 +69,16 @@ def process_csv(file_path1, file_path2):
 
 def parse_variant_csv(file_path):
     df = pd.read_csv(file_path, encoding="shift_jis", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
-
     key_df_list = []
     
     for _, row in df.iterrows():
-        key = str(row["code"]).strip() 
+        key = str(row["code"]).strip()
+        print("バリエーション取得中：key = ", key)
         
         # variant の内容を取得
         variant_cell = row["options"]
+        if pd.isna(variant_cell):
+            continue 
         
         # variant を行ごとに分割
         variant_lines = variant_cell.split("\n")
@@ -82,7 +86,7 @@ def parse_variant_csv(file_path):
         parsed_variants = []
         
         for variant in variant_lines:
-            parts = variant.split(" ", 1)
+            parts = variant.replace(" 選択してください", "").split(" ", 1)
             if len(parts) == 2:
                 name, values = parts
                 parsed_variants.append((name, values.split()))  # 2番目の部分（オプション）を分割
