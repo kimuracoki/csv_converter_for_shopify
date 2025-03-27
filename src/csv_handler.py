@@ -10,7 +10,7 @@ with open("./config/mapping.json", "r", encoding="utf-8") as f:
 def process_csv(file_path1, file_path2):
     """Shift JIS の CSV を読み込み、マッピング情報を追加して UTF-8 で返す"""
     try:
-        df = pd.read_csv(file_path1, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True, dtype={'key': str})
+        df = pd.read_csv(file_path1, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
 
         new_df = pd.DataFrame()
 
@@ -34,24 +34,24 @@ def process_csv(file_path1, file_path2):
                 for i, (_, row) in enumerate(df_variant.iterrows(), start=1):
                     new_row = df_match.copy()  # 結合元のデータをコピー
                     new_row["Handle"] = key + f"-{i:02d}"  # Handleを "-01", "-02" のように採番
-                    new_row["name1"] = row["name1"]
-                    new_row["value1"] = row["value1"]
-                    new_row["name2"] = row["name2"]
-                    new_row["value2"] = row["value2"]
-                    new_row["name3"] = row["name3"]
-                    new_row["value3"] = row["value3"]
+                    new_row["Option 1 Name"] = row["name1"]
+                    new_row["Option 1 Value"] = row["value1"]
+                    new_row["Option 2 Name"] = row["name2"]
+                    new_row["Option 2 Value"] = row["value2"]
+                    new_row["Option 3 Name"] = row["name3"]
+                    new_row["Option 3 Value"] = row["value3"]
                     merged_data.append(new_row)  # リストに追加
 
         # `Handle` が `parse_variant_csv` にない場合の処理
         df_no_match = new_df[~new_df["Handle"].isin(parsed_keys)].copy()
         if not df_no_match.empty:
             df_no_match["Handle"] = df_no_match["Handle"] + "-00"  # Handle に "-00" を追加
-            df_no_match["name1"] = ""
-            df_no_match["value1"] = ""
-            df_no_match["name2"] = ""
-            df_no_match["value2"] = ""
-            df_no_match["name3"] = ""
-            df_no_match["value3"] = ""
+            df_no_match["Option 1 Name"] = ""
+            df_no_match["Option  Value"] = ""
+            df_no_match["Option 2 Name"] = ""
+            df_no_match["Option 2 Value"] = ""
+            df_no_match["Option 3 Name"] = ""
+            df_no_match["Option 3 Value"] = ""
             merged_data.append(df_no_match)
 
         # `merged_data` が空でない場合のみ `concat` を実行
@@ -66,7 +66,7 @@ def process_csv(file_path1, file_path2):
         return f"エラー: {str(ex)}"
 
 def parse_variant_csv(file_path):
-    df = pd.read_csv(file_path, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True, dtype={'key': str})
+    df = pd.read_csv(file_path, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
 
     key_df_list = []
     
