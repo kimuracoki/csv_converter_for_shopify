@@ -10,29 +10,60 @@ with open("./config/mapping.json", "r", encoding="utf-8") as f:
 def process_csv(file_path1, file_path2):
     """Shift JIS の CSV を読み込み、マッピング情報を追加して UTF-8 で返す"""
     try:
-        df = pd.read_csv(file_path1, encoding="utf-8")
+        df = pd.read_csv(file_path1, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True, dtype={'key': str})
 
         new_df = pd.DataFrame()
 
-        for new_col, old_col in MAPPING.items():
-            for index, option in enumerate(parse_variant_csv(file_path2)):
-                if old_col in df.columns:
-                    new_df[new_col] = df[old_col]  
-                    # バリエーションによって上書き
-                    # new_df['Handle'] = new_df['Handle'] + index
-                    # new_df['Variant SKU'] = new_df['Variant SKU'] + index 
-                    new_df['Option 1 Name'] = option['name1']
-                    new_df['Option 1 Value'] = option['value1']
-                    new_df['Option 2 Name'] = option['name2']
-                    new_df['Option 2 Value'] = option['value2']
-                    new_df['Option 3 Name'] = option['name3']
-                    new_df['Option 3 Value'] = option['value3']
-                else:
-                    new_df[new_col] = ""  
+        # for new_col, old_col in MAPPING.items():
+        #     for key, option in parse_variant_csv(file_path2):
+        #         if old_col in df.columns:
+        #             if key == new_df['Variant SKU']:
+        #                 for index, row in option.iterrows():
+        #                     new_df[new_col] = df[old_col] 
+        #                     # バリエーションによって上書き
+        #                     # new_df['Handle'] = new_df['Handle'] + index
+        #                     # new_df['Variant SKU'] = new_df['Variant SKU'] + index 
+        #                     new_df['Option 1 Name'] = row['name1']
+        #                     new_df['Option 1 Value'] = row['value1']
+        #                     new_df['Option 2 Name'] = row['name2']
+        #                     new_df['Option 2 Value'] = row['value2']
+        #                     new_df['Option 3 Name'] = row['name3']
+        #                     new_df['Option 3 Value'] = row['value3']
+        #             else: 
+        #                 new_df[new_col] = df[old_col]
+        #         else:
+        #             new_df[new_col] = ""  
 
+        for new_col, old_col in MAPPING.items():
+            if old_col in df.columns: 
+                new_df[new_col] = df[old_col] 
+            else:
+                new_df[new_col] = "" 
+        
+        merged_data = []
+        
+        # 結合処理
+        for key, df_variant in parse_variant_csv(file_path2):
+            # `Handle` と `key` が一致するデータを取得
+            df_match = new_df[new_df["Handle"] == key]
+
+            if not df_match.empty:
+                for i, (_, row) in enumerate(df_variant.iterrows(), start=1):
+                    new_row = df_match.copy()  # 結合元のデータをコピー
+                    new_row["Handle"] = key + f"-{i:02d}"  # Handleを "-01", "-02" のように採番
+                    new_row["name1"] = row["name1"]
+                    new_row["value1"] = row["value1"]
+                    new_row["name2"] = row["name2"]
+                    new_row["value2"] = row["value2"]
+                    new_row["name3"] = row["name3"]
+                    new_row["value3"] = row["value3"]
+                    merged_data.append(new_row)  # リストに追加
+
+        df_merged = pd.concat(merged_data, ignore_index=True)
+        
         
         csv_buffer = io.StringIO()
-        new_df.to_csv(csv_buffer, index=False, encoding="utf-8", sep=",")
+        df_merged.to_csv(csv_buffer, index=False, encoding="utf-8", sep=",")
         return csv_buffer.getvalue()
 
     except Exception as ex:
@@ -79,10 +110,5 @@ def parse_variant_csv(file_path):
         
         # key と DataFrame をタプルとして追加
         key_df_list.append((key, df_variant))
-
-    # 結果を表示
-    for key, df in key_df_list:
-        print(f"Key: {key}")
-        print(df)
 
     return key_df_list
