@@ -30,12 +30,11 @@ def process_csv(file_path1, file_path2):
         # 結合処理
         for key, df_variant in parse_variant_results:
             key = str(key).strip()
-            # `SKU` と `key` が一致するデータを取得
             df_match = new_df[new_df["SKU"] == key]
 
             if not df_match.empty:
                 for i, (_, row) in enumerate(df_variant.iterrows(), start=1):
-                    new_row = df_match.copy()  # 結合元のデータをコピー
+                    new_row = df_match.copy()
                     new_row["SKU"] = str(key) + f"-{i:02d}"
                     new_row["Option1 name"] = row["name1"]
                     new_row["Option1 value"] = row["value1"]
@@ -43,33 +42,31 @@ def process_csv(file_path1, file_path2):
                     new_row["Option2 value"] = row["value2"]
                     new_row["Option3 name"] = row["name3"]
                     new_row["Option3 value"] = row["value3"]
-                    merged_data.append(new_row)  # リストに追加
+                    merged_data.append(new_row)
                     print("マージ中：SKU = ", new_row["SKU"])
 
-        # `SKU` が `parse_variant_csv` にない場合の処理
         df_no_match = new_df[~new_df["SKU"].isin(parsed_keys)].copy()
         if not df_no_match.empty:
             df_no_match["SKU"] = df_no_match["SKU"].astype(str) + "-00"
-            df_no_match["Option1 name"] = ""
-            df_no_match["Option1 value"] = ""
-            df_no_match["Option2 name"] = ""
-            df_no_match["Option2 value"] = ""
-            df_no_match["Option3 name"] = ""
-            df_no_match["Option3 value"] = ""
+            df_no_match[["Option1 name", "Option1 value", "Option2 name", "Option2 value", "Option3 name", "Option3 value"]] = ""
             merged_data.append(df_no_match)
             print("マージ中：SKU = ", df_no_match["SKU"])
 
-        # `merged_data` が空でない場合のみ `concat` を実行
         df_merged = pd.concat(merged_data, ignore_index=True) if merged_data else new_df.copy()
         
+        chunk_size = 10000
+        csv_chunks = []
         
-        csv_buffer = io.StringIO()
-        df_merged.to_csv(csv_buffer, index=False, encoding="utf-8", sep=",")
+        for i, chunk in enumerate(range(0, len(df_merged), chunk_size)):
+            csv_buffer = io.StringIO()
+            df_merged.iloc[chunk:chunk + chunk_size].to_csv(csv_buffer, index=False, encoding="utf-8", sep=",")
+            csv_chunks.append((f"merged_part_{i+1}.csv", csv_buffer.getvalue()))
+            
         print("処理完了")
-        return csv_buffer.getvalue()
+        return csv_chunks  # (ファイル名, データ) のリストを返す
 
     except Exception as ex:
-        return f"エラー: {str(ex)}"
+        return [("error.txt", f"エラー: {str(ex)}")]
 
 def parse_variant_csv(file_path):
     df = pd.read_csv(file_path, encoding="shift_jis", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
@@ -79,40 +76,31 @@ def parse_variant_csv(file_path):
         key = str(row["code"]).strip()
         print("バリエーション取得中：key = ", key)
         
-        # variant の内容を取得
         variant_cell = row["options"]
         if pd.isna(variant_cell):
             continue 
         
-        # variant を行ごとに分割
         variant_lines = variant_cell.split("\n")
-        
         parsed_variants = []
         
         for variant in variant_lines:
             parts = variant.replace("選択して下さい", "").split(" ", 1)
             if len(parts) == 2:
                 name, values = parts
-                parsed_variants.append((name, values.split()))  # 2番目の部分（オプション）を分割
+                parsed_variants.append((name, values.split()))
         
-        # 値の組み合わせを生成
         value_combinations = list(itertools.product(*[v for _, v in parsed_variants]))
-        
-        # DataFrame 用のデータ
         output = []
         for values in value_combinations:
             flat_list = list(itertools.chain(*zip([name for name, _ in parsed_variants], values)))
-            row_data = flat_list + ([""] * (6 - len(flat_list)))  # 最大3ペア (name, value)まで埋める
+            row_data = flat_list + ([""] * (6 - len(flat_list)))
             output.append(row_data)
 
-        # DataFrame を作成
         header = []
-        for i in range(1, 4):  # 最大3つの属性を想定
+        for i in range(1, 4):
             header.extend([f"name{i}", f"value{i}"])
 
         df_variant = pd.DataFrame(output, columns=header)
-        
-        # key と DataFrame をタプルとして追加
         key_df_list.append((key, df_variant))
 
     return key_df_list

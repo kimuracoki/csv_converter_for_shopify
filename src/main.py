@@ -11,7 +11,8 @@ def main(page: ft.Page):
 
     file_path_1 = None
     file_path_2 = None
-    modified_csv_data = []  # CSV分割用のリスト
+    modified_csv_data = []  # 複数ファイルのデータをリストで管理
+    download_index = 0  # ダウンロードするファイルのインデックス
 
     def check_ready_to_download():
         """ 両方のCSVがアップロードされたかチェック """
@@ -42,31 +43,47 @@ def main(page: ft.Page):
             page.update()
 
     def on_save_dialog_result(e: ft.FilePickerResultEvent, index: int):
-        """複数のCSVファイルを保存"""
+        """ファイルを保存する"""
         if e.path and modified_csv_data:
             try:
                 with open(e.path, "w", encoding="utf-8") as f:
-                    f.write(modified_csv_data[index])
-                status_text.value = f"CSVファイル {index+1} を保存しました。"
+                    f.write(modified_csv_data[index][1])  # (ファイル名, データ) のデータ部分を保存
+                status_text.value = f"{modified_csv_data[index][0]} を保存しました。"
             except Exception as ex:
                 status_text.value = f"保存エラー: {str(ex)}"
-
             page.update()
 
-            # 次のファイルの保存ダイアログを開く
-            if index + 1 < len(modified_csv_data):
-                file_saver.save_file(file_name=f"merged_part_{index+2}.csv", file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csv"], on_result=lambda e: on_save_dialog_result(e, index + 1))
+            # 次のファイルを保存
+            nonlocal download_index
+            download_index += 1
+            if download_index < len(modified_csv_data):
+                # 新しいダイアログを開く
+                file_saver.save_file(
+                    file_name=modified_csv_data[download_index][0], 
+                    file_type=ft.FilePickerFileType.CUSTOM, 
+                    allowed_extensions=["csv"]
+                )
+            else:
+                status_text.value = "すべてのファイルが保存されました。"
+                page.update()
 
     def on_download(e):
-        """CSVを処理して保存ダイアログを開く（複数ファイル対応）"""
+        """CSVを処理して保存ダイアログを複数回開く"""
         process_files()
         if modified_csv_data:
-            # 最初のファイルの保存ダイアログを開く
-            file_saver.save_file(file_name="merged_part_1.csv", file_type=ft.FilePickerFileType.CUSTOM, allowed_extensions=["csv"], on_result=lambda e: on_save_dialog_result(e, 0))
+            global download_index
+            download_index = 0  # インデックスをリセット
+            # 最初のファイルを保存
+            file_saver.save_file(
+                file_name=modified_csv_data[download_index][0], 
+                file_type=ft.FilePickerFileType.CUSTOM, 
+                allowed_extensions=["csv"]
+            )
 
     file_picker_1 = ft.FilePicker(on_result=on_file_selected_1)
     file_picker_2 = ft.FilePicker(on_result=on_file_selected_2)
-    file_saver = ft.FilePicker()  # 結果の処理は動的に設定
+    file_saver = ft.FilePicker(on_result=lambda e: on_save_dialog_result(e, download_index))  # on_result を設定
+    
     page.overlay.extend([file_picker_1, file_picker_2, file_saver])
 
     page.add(
