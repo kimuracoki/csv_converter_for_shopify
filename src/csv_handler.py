@@ -10,7 +10,7 @@ with open("./config/mapping.json", "r", encoding="utf-8") as f:
 def process_csv(file_path1, file_path2):
     """Shift JIS の CSV を読み込み、マッピング情報を追加して UTF-8 で返す"""
     try:
-        df = pd.read_csv(file_path1, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
+        df = pd.read_csv(file_path1, encoding="shift_jis", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
 
         new_df = pd.DataFrame()
 
@@ -66,15 +66,15 @@ def process_csv(file_path1, file_path2):
         return f"エラー: {str(ex)}"
 
 def parse_variant_csv(file_path):
-    df = pd.read_csv(file_path, encoding="utf-8", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
+    df = pd.read_csv(file_path, encoding="shift_jis", quotechar='"', quoting=csv.QUOTE_ALL, lineterminator='\n', skipinitialspace=True)
 
     key_df_list = []
     
     for _, row in df.iterrows():
-        key = str(row["key"]).strip() 
+        key = str(row["code"]).strip() 
         
         # variant の内容を取得
-        variant_cell = row["variant"]
+        variant_cell = row["options"]
         
         # variant を行ごとに分割
         variant_lines = variant_cell.split("\n")
