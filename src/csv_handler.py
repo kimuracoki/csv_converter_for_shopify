@@ -32,10 +32,10 @@ def process_csv(file_path1, file_path2):
             new_df["Description"] = new_df["Description"].astype(str).apply(process_html)
 
         if "Tags" in new_df.columns:
-            new_df["Tags"] = new_df["Tags"].replace(",", " ")
+            new_df["Tags"] = new_df["Tags"].astype(str).str.replace(",", " ")
 
         if "Product image URL" in new_df.columns:
-            new_df["Product image URL"] = new_df["Product image URL"].replace("http", "https").replace("imcshop.com/", "imcshop.com/image/").replace("jpg")
+            new_df["Product image URL"] = new_df["Product image URL"].astype(str).apply(process_jpg_url)
         
         parse_variant_results = parse_variant_csv(file_path2)
         parsed_keys = {key for key, _ in parse_variant_results}  # parse_variant_csv の key 一覧
@@ -130,3 +130,9 @@ def process_html(html: str) -> str:
     html = re.sub(r'<h4>', '<h3>', html)  # <h4> → <h3>
     html = re.sub(r'</h4>', '</h3>', html)  # </h4> → </h3>
     return html
+
+def process_jpg_url(url: str) -> str:
+    url = re.sub(r'http', 'https', url)  
+    url = re.sub(r'imcshop.com/', 'imcshop.com/image/', url)
+    url = re.sub(r'htm', 'jpg', url)
+    return url
