@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 import itertools
 import io
@@ -25,6 +26,9 @@ def process_csv(file_path1, file_path2):
                 new_df[new_col] = df[old_col] 
             else:
                 new_df[new_col] = "" 
+
+        if "Description" in new_df.columns:
+            new_df["Description"] = new_df["Description"].astype(str).apply(process_html)
         
         parse_variant_results = parse_variant_csv(file_path2)
         parsed_keys = {key for key, _ in parse_variant_results}  # parse_variant_csv の key 一覧
@@ -59,6 +63,8 @@ def process_csv(file_path1, file_path2):
             print("マージ中：SKU = ", df_no_match["SKU"])
 
         df_merged = pd.concat(merged_data, ignore_index=True) if merged_data else new_df.copy()
+        
+        # 不要なdomを除去＆置き換え
         
         chunk_size = 6000
         csv_chunks = []
@@ -110,3 +116,10 @@ def parse_variant_csv(file_path):
         key_df_list.append((key, df_variant))
 
     return key_df_list
+
+def process_html(html: str) -> str:
+    html = re.sub(r'<a [^>]*>', '', html)  # <a ...> の開始タグを削除
+    html = re.sub(r'</a>', '', html)  # </a> の閉じタグを削除
+    html = re.sub(r'<h4>', '<h3>', html)  # <h4> → <h3>
+    html = re.sub(r'</h4>', '</h3>', html)  # </h4> → </h3>
+    return html
