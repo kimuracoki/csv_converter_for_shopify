@@ -29,6 +29,9 @@ def process_csv(file_path1, file_path2):
 
         if "Description" in new_df.columns:
             new_df["Description"] = new_df["Description"].astype(str).apply(process_html)
+
+        if "Tags" in new_df.columns:
+            new_df["Tags"] = new_df["Tags"].replace(",", " ")
         
         parse_variant_results = parse_variant_csv(file_path2)
         parsed_keys = {key for key, _ in parse_variant_results}  # parse_variant_csv の key 一覧
