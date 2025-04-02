@@ -27,11 +27,15 @@ def process_csv(file_path1, file_path2):
             else:
                 new_df[new_col] = "" 
 
+        # 項目毎に調整
         if "Description" in new_df.columns:
             new_df["Description"] = new_df["Description"].astype(str).apply(process_html)
 
         if "Tags" in new_df.columns:
             new_df["Tags"] = new_df["Tags"].replace(",", " ")
+
+        if "Product image URL" in new_df.columns:
+            new_df["Product image URL"] = new_df["Product image URL"].replace("http", "https").replace("imcshop.com/", "imcshop.com/image/").replace("jpg")
         
         parse_variant_results = parse_variant_csv(file_path2)
         parsed_keys = {key for key, _ in parse_variant_results}  # parse_variant_csv の key 一覧
