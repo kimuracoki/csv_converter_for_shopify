@@ -96,7 +96,7 @@ def parse_variant_csv(file_path):
         parsed_variants = []
         
         for variant in variant_lines:
-            parts = variant.replace("選択して下さい", "").split(" ", 1)
+            parts = variant.replace("選択して下さい", "").replace("選択してください", "").split(" ", 1)
             if len(parts) == 2:
                 name, values = parts
                 parsed_variants.append((name, values.split()))
