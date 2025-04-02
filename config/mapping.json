@@ -1,14 +1,26 @@
 {
-    "Title":"商品名",
-    "handle": "商品番号",
-    "Body(HTML)":"スマフォ用メイン紹介文（オプション）",
-    "Vendor":"グループ",
-    "Product Category":"ショップサーブカテゴリID",
-    "Type":"ショップサーブカテゴリ名",
-    "Tags":"商品ページキーワード",
-    "SKU":"商品番号",
-    "Variant Grams":"販売価格",
-    "SEO Title":"商品名",
-    "SEO Description":"外部用キャッチコピー",
-    "Compare At Price / International":"定価"
+  "Title": "商品名",
+  "URL handle": "商品名",
+  "Description": ["メイン紹介文", "サブ紹介文１", "サブ紹介文２"],
+  "Vendor": "グループ",
+  "Product Category": "ショップサーブカテゴリID",
+  "Type": "ショップサーブカテゴリ名",
+  "Tags": [
+    "商品ページキーワード",
+    "Criteo用カテゴリ1",
+    "Criteo用カテゴリ2",
+    "グループ"
+  ],
+  "SKU": "商品番号",
+  "Option1 Name": "",
+  "Option1 value": "",
+  "Option2 Name": "",
+  "Option2 value": "",
+  "Option3 Name": "",
+  "Option3 value": "",
+  "Price": "販売価格",
+  "Compare-at price": "定価",
+  "Product image URL": "画像ファイル名",
+  "SEO Title": "商品名",
+  "SEO Description": "外部用キャッチコピー"
 }

@@ -15,7 +15,13 @@ def process_csv(file_path1, file_path2):
         new_df = pd.DataFrame()
 
         for new_col, old_col in MAPPING.items():
-            if old_col in df.columns: 
+            if isinstance(old_col, list):  # old_col がリストの場合
+                valid_cols = [col for col in old_col if col in df.columns]  # 存在するカラムを取得
+                if valid_cols:
+                    new_df[new_col] = df[valid_cols].astype(str).apply(lambda row: ' '.join(row), axis=1)
+                else:
+                    new_df[new_col] = ""
+            elif old_col in df.columns: 
                 new_df[new_col] = df[old_col] 
             else:
                 new_df[new_col] = "" 
@@ -54,7 +60,7 @@ def process_csv(file_path1, file_path2):
 
         df_merged = pd.concat(merged_data, ignore_index=True) if merged_data else new_df.copy()
         
-        chunk_size = 10000
+        chunk_size = 6000
         csv_chunks = []
         
         for i, chunk in enumerate(range(0, len(df_merged), chunk_size)):
